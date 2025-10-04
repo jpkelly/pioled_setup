@@ -42,7 +42,7 @@ import adafruit_ssd1306
 WIDTH, HEIGHT = 128, 32
 I2C_ADDR = 0x3C
 FONT_PATH = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-FONT_SIZE = 15
+FONT_SIZE = 12
 PAGE_DURATION = 5  # seconds per page
 DISK_PATH = "/"   # mount point to report
 
@@ -157,8 +157,8 @@ while True:
     # Compose strings
     host_disp = trim_to_width(host, font, WIDTH) or host[:0]
     ip_disp   = trim_to_width(ip,   font, WIDTH) or ip[:0]
-    line_ram  = f"RAM {human_bytes(r_used)}/{human_bytes(r_total)} {r_pct:3.0f}%"
-    line_dsk  = f"DSK {human_bytes(d_used)}/{human_bytes(d_total)} {d_pct:3.0f}%"
+    line_ram  = f"M {human_bytes(r_used)}/{human_bytes(r_total)} {r_pct:3.0f}%"
+    line_dsk  = f"D {human_bytes(d_used)}/{human_bytes(d_total)} {d_pct:3.0f}%"
     line_ram  = trim_to_width(line_ram, font, WIDTH)
     line_dsk  = trim_to_width(line_dsk, font, WIDTH)
 
