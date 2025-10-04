@@ -8,6 +8,11 @@ A setup utility for configuring PiOLED displays on Raspberry Pi devices. This to
 
 ## Installation Instructions
 
+Run
+```
+curl -fsSL https://raw.githubusercontent.com/jpkelly/pioled_setup/main/setup.sh | sudo bash
+```
+
 1. **Enable I2C on your Raspberry Pi:**
    - Run `sudo raspi-config`
    - Go to `Interfacing Options` > `I2C` and enable it.
