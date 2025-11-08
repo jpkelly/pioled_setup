@@ -59,4 +59,4 @@ This command will run a demo script that displays sample text and graphics on yo
 
 ---
 
-For further details, see individual script comments and the Adafruit PiOLED [guide](https://learn.adafruit.com/pi-oled-ssd1306-python-library/overview).
+For further details, see individual script comments and the Adafruit PiOLED [guide](https://learn.adafruit.com/adafruit-pioled-128x32-mini-oled-for-raspberry-pi/usage).
