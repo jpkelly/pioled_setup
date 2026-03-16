@@ -87,10 +87,13 @@ def get_hostname_local():
     return host if host.endswith(".local") else host + ".local"
 
 def get_wifi_ssid():
-    """Return current Wi-Fi SSID via iwgetid, else 'No Wi-Fi'."""
+    """Return Wi-Fi SSID (works in both AP and client mode)."""
     try:
-        ssid = subprocess.check_output(["iwgetid", "-r"], text=True).strip()
-        return ssid if ssid else "No Wi-Fi"
+        out = subprocess.check_output(
+            ["iw", "dev", "wlan0", "info"], text=True
+        )
+        m = re.search(r"^\s*ssid\s+(.+)$", out, re.MULTILINE)
+        return m.group(1).strip() if m else "No Wi-Fi"
     except Exception:
         return "No Wi-Fi"
 
