@@ -87,26 +87,52 @@ def get_hostname_local():
     return host if host.endswith(".local") else host + ".local"
 
 def get_wifi_ssid():
-    """Return Wi-Fi SSID (works in both AP and client mode)."""
+    """Return Wi-Fi/AP SSID using multiple detection methods."""
+    # Method 1: iw dev (scan all wireless interfaces)
+    try:
+        out = subprocess.check_output(["iw", "dev"], text=True)
+        m = re.search(r"^\s*ssid\s+(.+)$", out, re.MULTILINE)
+        if m:
+            return m.group(1).strip()
+    except Exception:
+        pass
+    # Method 2: hostapd config
+    try:
+        with open("/etc/hostapd/hostapd.conf") as f:
+            for line in f:
+                m = re.match(r"^ssid=(.+)", line.strip())
+                if m:
+                    return m.group(1)
+    except Exception:
+        pass
+    # Method 3: nmcli active Wi-Fi/AP connection
     try:
         out = subprocess.check_output(
-            ["iw", "dev", "wlan0", "info"], text=True
+            ["nmcli", "-t", "-f", "NAME,TYPE", "connection", "show", "--active"],
+            text=True
         )
-        m = re.search(r"^\s*ssid\s+(.+)$", out, re.MULTILINE)
-        return m.group(1).strip() if m else "No Wi-Fi"
+        for line in out.strip().splitlines():
+            name, ctype = line.split(":", 1)
+            if "wireless" in ctype:
+                return name
     except Exception:
-        return "No Wi-Fi"
+        pass
+    return "No Wi-Fi"
 
 def get_wifi_ip():
-    """Return IPv4 address of wlan0, else 'Not Connected'."""
-    try:
-        out = subprocess.check_output(
-            ["ip", "-4", "-o", "addr", "show", "wlan0"], text=True
-        ).strip()
-        m = re.search(r"inet\s+(\d+\.\d+\.\d+\.\d+)", out)
-        return m.group(1) if m else "Not Connected"
-    except Exception:
-        return "Not Connected"
+    """Return IPv4 address of a wireless interface, else 'Not Connected'."""
+    # Find wireless interface names from /sys/class/net
+    for iface in ("wlan0", "ap0", "wlan1"):
+        try:
+            out = subprocess.check_output(
+                ["ip", "-4", "-o", "addr", "show", iface], text=True
+            ).strip()
+            m = re.search(r"inet\s+(\d+\.\d+\.\d+\.\d+)", out)
+            if m:
+                return m.group(1)
+        except Exception:
+            continue
+    return "Not Connected"
 
 def _read_meminfo():
     d = {}
