@@ -24,7 +24,7 @@ sudo usermod -aG i2c "$APP_USER" || true
 cat > "$APP_PATH" <<'PY'
 #!/usr/bin/env python3
 # pioled_status.py — PiOLED 128x32 status screen for Raspberry Pi 5
-# Shows: hostname.local + IPv4 (page 1), RAM + Disk (page 2)
+# Shows: hostname.local + IPv4 (page 1), RAM + Disk (page 2), Wi-Fi SSID + IP (page 3)
 
 import time
 import board
@@ -85,6 +85,25 @@ def get_ipv4_address():
 def get_hostname_local():
     host = socket.gethostname()
     return host if host.endswith(".local") else host + ".local"
+
+def get_wifi_ssid():
+    """Return current Wi-Fi SSID via iwgetid, else 'No Wi-Fi'."""
+    try:
+        ssid = subprocess.check_output(["iwgetid", "-r"], text=True).strip()
+        return ssid if ssid else "No Wi-Fi"
+    except Exception:
+        return "No Wi-Fi"
+
+def get_wifi_ip():
+    """Return IPv4 address of wlan0, else 'Not Connected'."""
+    try:
+        out = subprocess.check_output(
+            ["ip", "-4", "-o", "addr", "show", "wlan0"], text=True
+        ).strip()
+        m = re.search(r"inet\s+(\d+\.\d+\.\d+\.\d+)", out)
+        return m.group(1) if m else "Not Connected"
+    except Exception:
+        return "Not Connected"
 
 def _read_meminfo():
     d = {}
@@ -153,6 +172,8 @@ while True:
 
     r_used, r_total, r_pct = get_ram_usage()
     d_used, d_total, d_pct = get_disk_usage(DISK_PATH)
+    wifi_ssid = get_wifi_ssid()
+    wifi_ip = get_wifi_ip()
 
     # Compose strings
     host_disp = trim_to_width(host, font, WIDTH) or host[:0]
@@ -161,14 +182,18 @@ while True:
     line_dsk  = f"D {human_bytes(d_used)}/{human_bytes(d_total)} {d_pct:3.0f}%"
     line_ram  = trim_to_width(line_ram, font, WIDTH)
     line_dsk  = trim_to_width(line_dsk, font, WIDTH)
+    ssid_disp = trim_to_width(f"SSID {wifi_ssid}", font, WIDTH)
+    wip_disp  = trim_to_width(f"IP {wifi_ip}", font, WIDTH)
 
     if page == 0:
         draw_two_lines(host_disp, ip_disp)
-    else:
+    elif page == 1:
         draw_two_lines(line_ram, line_dsk)
+    else:
+        draw_two_lines(ssid_disp, wip_disp)
 
     time.sleep(PAGE_DURATION)
-    page ^= 1
+    page = (page + 1) % 3
 PY
 
 sudo chown "$APP_USER:$APP_USER" "$APP_PATH"
